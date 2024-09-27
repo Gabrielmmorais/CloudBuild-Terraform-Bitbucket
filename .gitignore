@@ -1,0 +1,9 @@
+Terraform/.terraform
+Terraform/.terraform.lock.hcl
+Terraform/terraform.tfstate
+Terraform/terraform.tfstate.backup
+
+artifact/terraform.tfstate
+
+Terraform/tcb-k8s-394716-8b1b906a988b.json
+artifact/tcb-k8s-394716-8b1b906a988b.json

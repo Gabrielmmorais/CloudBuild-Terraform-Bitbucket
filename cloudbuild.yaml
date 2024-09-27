@@ -1,0 +1,45 @@
+steps:
+  # Passo 1: Configurar a autenticação para o Docker
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: ['auth', 'configure-docker', 'us-east1-docker.pkg.dev']
+
+  # Passo 2: Construir a imagem Docker
+  - name: 'docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'us-east1-docker.pkg.dev/tcb-k8s-394716/cloudbuild-html/cloudbuild-html:${SHORT_SHA}'  # Usando SHORT_SHA
+      - '.'
+
+  # Passo 3: Importar o repositório do Google Artifact Registry para o Terraform
+  - name: 'hashicorp/terraform'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        terraform init
+        terraform apply -auto-approve -target=google_artifact_registry_repository.cloudbuild-html
+    dir: 'artifact'
+
+  # Passo 4: Fazer push da imagem Docker para o Artifact Registry
+  - name: 'docker'
+    args:
+      - 'push'
+      - 'us-east1-docker.pkg.dev/tcb-k8s-394716/cloudbuild-html/cloudbuild-html:${SHORT_SHA}'  # Usando SHORT_SHA
+
+  # Passo 5: Aplicar o Terraform para atualizar o Cloud Run com a nova imagem
+  - name: 'hashicorp/terraform'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        terraform init
+        terraform apply --auto-approve -var="image_tag=${SHORT_SHA}"
+    dir: 'Terraform'
+
+substitutions:
+  _IMAGE_TAG: '${SHORT_SHA}'  # Definindo a substituição, mas não é necessária se você usar diretamente o SHORT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+######
