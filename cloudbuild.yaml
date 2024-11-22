@@ -36,7 +36,7 @@ steps:
         terraform init
         terraform apply --auto-approve -var="image_tag=${SHORT_SHA}"
     dir: 'Terraform'
-
+#
 substitutions:
   _IMAGE_TAG: '${SHORT_SHA}'  # Definindo a substituição, mas não é necessária se você usar diretamente o SHORT_SHA
 
