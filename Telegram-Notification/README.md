@@ -1,1 +1,3 @@
-[Untitled Diagram.drawio(1)(1)](./Untitled%20Diagram.drawio%281%29%281%29)
+# GCP: Cloud Build Pub/Sub Pipeline Telegram Alerts
+
+![Architecture Diagram](./telegram-notification.svg)
