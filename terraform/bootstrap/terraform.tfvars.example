@@ -1,0 +1,8 @@
+project_id      = "my-gcp-project"
+tf_state_bucket = "my-tf-state-bucket"
+
+# Optional overrides
+# region                     = "us-central1"
+# repository_id              = "cloudbuild-demo"
+# build_service_account_id   = "cloudbuild-deployer"
+# runtime_service_account_id = "cloudrun-runtime"

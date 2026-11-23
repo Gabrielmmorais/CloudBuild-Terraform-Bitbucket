@@ -1,11 +1,12 @@
-FROM nginx:1.10.1-alpine
+# Static site served by unprivileged nginx (runs as UID 101, listens on 8080).
+FROM nginxinc/nginx-unprivileged:1.28.1-alpine
 
-COPY index.html /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY index.html /usr/share/nginx/html/index.html
 
+# Cloud Run sends traffic to $PORT (8080 by default).
 EXPOSE 8080
 
-RUN apk add --no-cache bash
+USER 101
 
-#CMD ["nginx","-g", "daemon off;", "preview" ,"--host","0.0.0.0", "--port 8080"]
 CMD ["nginx", "-g", "daemon off;"]
