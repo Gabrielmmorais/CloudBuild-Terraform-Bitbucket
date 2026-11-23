@@ -1,0 +1,5 @@
+# Only Dockerfile, nginx.conf and index.html are needed in the build context.
+*
+!Dockerfile
+!nginx.conf
+!index.html

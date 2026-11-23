@@ -1,0 +1,116 @@
+# Static checks for the Terraform stacks, the container image and the
+# Telegram notifier. No cloud credentials or secrets are used: Terraform is
+# initialised with -backend=false and nothing talks to GCP.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  terraform-fmt:
+    name: terraform fmt
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          # Matches the hashicorp/terraform image used in cloudbuild.yaml.
+          terraform_version: 1.13.5
+          terraform_wrapper: false
+      - name: Check formatting
+        run: terraform fmt -check -recursive -diff terraform/
+
+  terraform-validate:
+    name: terraform validate (${{ matrix.stack }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack: [bootstrap, service]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.13.5
+          terraform_wrapper: false
+      - name: Init (no backend)
+        run: terraform -chdir=terraform/${{ matrix.stack }} init -backend=false -input=false
+      - name: Validate
+        run: terraform -chdir=terraform/${{ matrix.stack }} validate
+
+  tflint:
+    name: tflint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: v0.66.0
+      - name: Init plugins
+        run: tflint --init --config "$GITHUB_WORKSPACE/.tflint.hcl"
+        env:
+          # Avoids anonymous GitHub API rate limits when downloading plugins.
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Lint
+        run: tflint --recursive --format compact --config "$GITHUB_WORKSPACE/.tflint.hcl"
+
+  checkov:
+    name: checkov
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Scan Terraform
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          directory: terraform
+          framework: terraform
+          soft_fail: false
+          quiet: true
+          # CKV_GCP_84: CSEK/CMEK on Artifact Registry needs a Cloud KMS key
+          # ring and key; Google-managed encryption is used to keep the demo
+          # cheap and self-contained.
+          skip_check: CKV_GCP_84
+      - name: Scan Dockerfile
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          file: Dockerfile
+          framework: dockerfile
+          soft_fail: false
+          quiet: true
+          # CKV_DOCKER_2: Cloud Run ignores Docker HEALTHCHECK; health is
+          # checked by the startup probe defined in terraform/service.
+          skip_check: CKV_DOCKER_2
+
+  hadolint:
+    name: hadolint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile
+
+  notifier-tests:
+    name: notifier tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      # The tests stub functions_framework and requests via sys.modules, so
+      # no dependencies are installed on purpose.
+      - name: Run unit tests
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -I -m unittest discover -s functions/telegram-notifier -v

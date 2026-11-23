@@ -1,0 +1,15 @@
+# Normally supplied by the Cloud Build pipeline with -var flags.
+project_id                    = "my-gcp-project"
+image                         = "us-central1-docker.pkg.dev/my-gcp-project/cloudbuild-demo/web:abc1234"
+runtime_service_account_email = "cloudrun-runtime@my-gcp-project.iam.gserviceaccount.com"
+
+# Optional overrides
+# region                = "us-central1"
+# service_name          = "cloudbuild-demo"
+# allow_unauthenticated = false
+# min_instance_count    = 0
+# max_instance_count    = 2
+# cpu                   = "1"
+# memory                = "512Mi"
+# container_port        = 8080
+# deletion_protection   = false

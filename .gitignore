@@ -1,9 +1,22 @@
-Terraform/.terraform
-Terraform/.terraform.lock.hcl
-Terraform/terraform.tfstate
-Terraform/terraform.tfstate.backup
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+tfplan
+crash.log
 
-artifact/terraform.tfstate
+# Credentials (never commit service account keys)
+*-key.json
+credentials*.json
+service-account*.json
 
-Terraform/tcb-k8s-394716-8b1b906a988b.json
-artifact/tcb-k8s-394716-8b1b906a988b.json
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local environment / OS
+.env
+.DS_Store
